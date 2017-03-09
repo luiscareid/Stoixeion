@@ -1,0 +1,21 @@
+%Creado por LC
+%Encuentra el porcentaje de celulas compartidas entre los diferentes
+%estados.
+
+
+function [Shared_Cells]=SharedCells(Cells_edos_active)
+
+S=size(Cells_edos_active,2);
+
+
+for ss=1:S
+    for ss+1:S
+        Sa=Cells_edos_active(:,ss);
+        Sb=Cells_edos_active(:,ss+1);
+        Sc=size(find(Sa==ss),1);
+        Sd=size(find(Sb==ss+1),1);
+        Se=sum
+
+        
+    end;
+end;
