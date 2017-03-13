@@ -196,7 +196,7 @@ for n = 1:edos
     scatter(Coord_active(:,1),Coord_active(:,2),mksz,'k');
     scatter(Cells_coords(:,1,n),Cells_coords(:,2,n),mksz,cc_lr,'filled');
     scatter(Pools_coords(:,1,n),Pools_coords(:,2,n),mksz,cc_r,'filled');
-    title(['ensemble ' num2str(n)]);
+    title(['ensemble #' num2str(n)]);
     axis off equal
 end
 
@@ -220,7 +220,7 @@ if ~isempty(FFo)
         end
         xlim([1 size(Spikes,2)]); ylim([0 ii+1])
         xlabel('time (frame)'); ylabel('F'); box on
-        title(['core ' num2str(n)]);
+        title(['core #' num2str(n)]);
     end
 end
 
