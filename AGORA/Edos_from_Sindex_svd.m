@@ -20,54 +20,77 @@ function [C_edos,sec_Pk_edos] = Edos_from_Sindex_svd(S_indexp,state_cut)
 % 
 % Modifications by Shuting Han, 2017
 
-p = 0.98;
+p = 0.05; %significant states need to appear at least 5% of the time to be considered LCR
 
 % do SVD on binarized similarity matrix
 sz = size(S_indexp,2);
 [U_svd,S_svd,V_svd] = svd(S_indexp);
 
 % binary search factor cut
-S_rec = U_svd*S_svd*V_svd';
-fmi = min(S_rec(:));
-fma = max(S_rec(:));
-fac_cut = (fmi+fma)/2;
+% S_rec = U_svd*S_svd*V_svd';
+% fmi = min(S_rec(:));
+% fma = max(S_rec(:));
+fac_cut = 0.4; %(fmi+fma)/2;
 dlt = 1;
-while dlt > 0.05
+while dlt > 0
     
+        % restore factors
+    fac_count = zeros(state_cut,1);
+    for n = 1:state_cut
+        fac_count(n) = sum(sum((V_svd(:,n)*V_svd(:,n)'*S_svd(n,n))>fac_cut));
+    end
+
+    edos_temp1=floor(sqrt(fac_count));
+    edos_temp2=find(edos_temp1./sum(edos_temp1)>=p);
+    num_state=size(edos_temp2,1);
+
+    % find cells for each state
+    svd_sig = zeros(sz,sz,num_state);
+    for n = 1:num_state
+        svd_sig(:,:,n) = (V_svd(:,edos_temp2(n))*V_svd(:,edos_temp2(n))'*S_svd(edos_temp2(n),edos_temp2(n)))>fac_cut;
+    end
+
+    edos_rep = size(svd_sig,3);
+    edos_pks_num = zeros(edos_rep,sz);
+    for epi = 1:edos_rep % number of states
+        edos_pks_num(epi,sum(svd_sig(:,:,epi))>0) = 1;
+    end
+    % To check that two edos do not overlap: figure; plot (sum (edos_pks_num));
+
+    if max(sum(edos_pks_num))>1
+        fac_cut=fac_cut+0.01;
+        dlt=1;
+    else
+        dlt=0;
+    end
+
     % threshold all factors with current cutoff value
-    fac = zeros(sz,sz);
-    for ii = 1:state_cut
-        fac = fac+double((V_svd(:,ii)*V_svd(:,ii)'*S_svd(ii,ii))>fac_cut);
-    end
+%     fac = zeros(sz,sz);
+%     for ii = 1:state_cut
+%         fac = fac+double((V_svd(:,ii)*V_svd(:,ii)'*S_svd(ii,ii))>fac_cut);
+%     end
     
-    % check overlap, update lower and upper boundaries
-    if any(fac(:)>1) % cut too small, there's overlap, increase
-        fcut_old = fac_cut;
-        fac_cut = (fac_cut+fma)/2;
-        fmi = fac_cut;
-    else % cut too large, decrease
-        fcut_old = fac_cut;
-        fac_cut = (fac_cut+fmi)/2;
-        fma = fac_cut;
-    end
-    dlt = abs(fcut_old-fac_cut);
+%     % check overlap, update lower and upper boundaries %sometimes
+%     non-orthogonal, changed algorithm LCR 
+%     if any(fac(:)>1) % cut too small, there's overlap, increase
+%         fcut_old = fac_cut;
+%         fac_cut = (fac_cut+fma)/2;
+%         fmi = fac_cut;
+%     else % cut too large, decrease
+%         fcut_old = fac_cut;
+%         fac_cut = (fac_cut+fmi)/2;
+%         fma = fac_cut;
+%     end
     
 end
 
-% restore factors
-fac_count = zeros(state_cut,1);
-for n = 1:state_cut
-    fac_count(n) = sum(sum((V_svd(:,n)*V_svd(:,n)'*S_svd(n,n))>fac_cut));
-end
-fac_count = cumsum(fac_count);
-fac_count = fac_count/fac_count(end);
-num_state = find(fac_count>p,1)-1;
+%fac_cut=0.85;
 
-% find cells for each state
-svd_sig = zeros(sz,sz,num_state);
-for n = 1:num_state
-    svd_sig(:,:,n) = (V_svd(:,n)*V_svd(:,n)'*S_svd(n,n))>fac_cut;
-end
+
+% fac_count = cumsum(fac_count);    %Conceptual mistake, should be
+% sorted in order to avoid errors LCR
+% fac_count = fac_count/fac_count(end);
+% num_state = find(fac_count>p,1)-1;
 
 % %remove values smaller than cut in rows and columns
 % S_svd_sig = S_svd(1:edos_size_cut,1:edos_size_cut);
@@ -86,13 +109,7 @@ end
 % svd_sig = svd_fac(:,:,sum(sum(svd_fac,1),2)>rep_svd); 
 % To verify that two vectors do not belong to the same state, the sum of
 % all vectors should not be greater than 1
-edos_rep = size(svd_sig,3);
-edos_pks_num = zeros(edos_rep,sz);
-for epi = 1:edos_rep % number of states
-    edos_pks_num(epi,sum(svd_sig(:,:,epi))>0) = 1;
-end
 
-% To check that two edos do not overlap: figure; Plot (sum (edos_pks_num));
 edos_pks_num_sort = sortrows(edos_pks_num);
 edos_pks_num_sort = rot90(edos_pks_num_sort');
 edos_pks_num_sort_n = zeros(size(edos_pks_num_sort));
@@ -113,6 +130,5 @@ end;
 
 C_edos = edos_pks_num_sort';
 sec_Pk_edos = sum(edos_pks_num_sort_n);
-
 
 end
