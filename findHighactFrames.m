@@ -13,10 +13,10 @@ function [data_high,pks_frame,pks] = findHighactFrames(data,pks)
 
 % some parameters
 num_shuff = 100;
-p = 0.7;
+%p = 0.9;
 dims = size(data);
-max_th = 50;
-pks_vec = 1:max_th; % maximum threshold 50 spikes
+% max_th = 50;
+% pks_vec = 1:max_th; % maximum threshold 50 spikes
 
 % determine threshold from shuffled data
 if isempty(pks)
@@ -27,14 +27,15 @@ if isempty(pks)
         data_shuff(:,:,n) = shuffle(data,'time');
     end
     
-    for n = 1:length(pks_vec)
-        data_sig = sum(sum(data,1)>pks_vec(n));
-        num_sig = sum(squeeze(sum(data_shuff,1))>pks_vec(n),1);
-        bin_range = 0:1:max(num_sig);
-        fsig_hist = histc(num_sig,bin_range);
-        fsig_hist = cumsum(fsig_hist/sum(fsig_hist));
-        if data_sig>bin_range(find(fsig_hist>p,1))
-            pks = pks_vec(n);
+    for n = 1:dims(1)
+        data_sig = sum(sum(data,1)>=n);
+        num_sig = sum(squeeze(sum(data_shuff,1))>=n,1);
+%         bin_range = 0:1:max(num_sig);  %LCR something was wrong with this
+%         21Mar17
+%         fsig_hist = histc(num_sig,bin_range);
+%         fsig_hist = cumsum(fsig_hist/sum(fsig_hist));
+        if  data_sig>=mean(num_sig)            %data_sig>bin_range(find(fsig_hist>p,1))
+            pks = n;
             break;
         end
     end

@@ -2,7 +2,7 @@ function [scut] = calc_scut(data)
 % calculate threshold of similarity values from shuffled data
 
 num_shuff = 100;
-p = 0.9;
+p = 0.88;
 dims = size(data);
 
 % make shuffled data

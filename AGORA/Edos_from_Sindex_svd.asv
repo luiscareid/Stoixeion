@@ -27,42 +27,35 @@ sz = size(S_indexp,2);
 [U_svd,S_svd,V_svd] = svd(S_indexp);
 
 % binary search factor cut
-% S_rec = U_svd*S_svd*V_svd';
+S_rec = U_svd*S_svd*V_svd';
 % fmi = min(S_rec(:));
 % fma = max(S_rec(:));
-fac_cut = 0.4; %(fmi+fma)/2;
+fac_cut = 0.05; %(fmi+fma)/2;
 dlt = 1;
 while dlt > 0
     
-        % restore factors
-    fac_count = zeros(state_cut,1);
-    for n = 1:state_cut
-        fac_count(n) = sum(sum((V_svd(:,n)*V_svd(:,n)'*S_svd(n,n))>fac_cut));
-    end
+    % restore factors
+fac_count = zeros(state_cut,1);
+for n = 1:state_cut
+    fac_count(n) = sum(sum((V_svd(:,n)*V_svd(:,n)'*S_svd(n,n))>fac_cut));
+end
 
-    edos_temp1=floor(sqrt(fac_count));
-    edos_temp2=find(edos_temp1./sum(edos_temp1)>=p);
-    num_state=size(edos_temp2,1);
+edos_temp1=floor(sqrt(fac_count));
+edos_temp2=find(edos_temp1./sum(edos_temp1)>=p);
+num_state=size(edos_temp2,1);
 
-    % find cells for each state
-    svd_sig = zeros(sz,sz,num_state);
-    for n = 1:num_state
-        svd_sig(:,:,n) = (V_svd(:,edos_temp2(n))*V_svd(:,edos_temp2(n))'*S_svd(edos_temp2(n),edos_temp2(n)))>fac_cut;
-    end
+% find cells for each state
+svd_sig = zeros(sz,sz,num_state);
+for n = 1:num_state
+    svd_sig(:,:,n) = (V_svd(:,edos_temp2(n))*V_svd(:,edos_temp2(n))'*S_svd(edos_temp2(n),edos_temp2(n)))>fac_cut;
+end
 
-    edos_rep = size(svd_sig,3);
-    edos_pks_num = zeros(edos_rep,sz);
-    for epi = 1:edos_rep % number of states
-        edos_pks_num(epi,sum(svd_sig(:,:,epi))>0) = 1;
-    end
-    % To check that two edos do not overlap: figure; plot (sum (edos_pks_num));
-
-    if max(sum(edos_pks_num))>1
-        fac_cut=fac_cut+0.01;
-        dlt=1;
-    else
-        dlt=0;
-    end
+edos_rep = size(svd_sig,3);
+edos_pks_num = zeros(edos_rep,sz);
+for epi = 1:edos_rep % number of states
+    edos_pks_num(epi,sum(svd_sig(:,:,epi))>0) = 1;
+end
+% To check that two edos do not overlap: figure; plot (sum (edos_pks_num));
 
     % threshold all factors with current cutoff value
 %     fac = zeros(sz,sz);
@@ -131,5 +124,6 @@ end;
 
 C_edos = edos_pks_num_sort';
 sec_Pk_edos = sum(edos_pks_num_sort_n);
+
 
 end

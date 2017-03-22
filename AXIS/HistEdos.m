@@ -10,7 +10,7 @@ function [Hist_Edos] = HistEdos(Spikes,Pks_Frame,sec_Pk_Frame,pks)
 Hist_Edos = sum(Spikes,1);
 numT = size(Spikes,2);
 
-figure(3); set(gcf,'color','w')
+figure(4); clf; set(gcf,'color','w')
 plot(1:numT,Hist_Edos)
 xlim([1 numT])
 xlabel('frame'); ylabel('spike count')
@@ -22,7 +22,7 @@ hg=max(sum(Spikes));
 
 for hh=1:H
     if sec_Pk_Frame(hh)>0
-        text(Pks_Frame(hh),sec_Pk_Frame(hh)*2.5+(hg-pks)/5,...
+        text(Pks_Frame(hh),hg-sec_Pk_Frame(hh)*1.5,...
             num2str(sec_Pk_Frame(hh)),'FontSize',10)
     end
 end;
@@ -38,7 +38,7 @@ for hh=1:H
 end;
 
 %Para hacer la grafica de estados en funcion del numero de frames 
-figure(4); set(gcf,'color','w');
+figure(5); clf; set(gcf,'color','w');
 % plot([0 hi],[0 max(sec_Pk_Frame)+1]);
 for hh = 1:H
     if sec_Pk_Frame(hh)>0

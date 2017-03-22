@@ -24,6 +24,7 @@ function [Pools_coords] = Stoixeion(Spikes,Coord_active,FFo)
 
 %% set parameters
 % significant level of spike count per frame
+
 pks = []; % default 4, leave it empty if you want an automated threshold
 
 % This is a threshold of coactivity. Suggested range is 0.22-0.25
@@ -35,21 +36,22 @@ pks = []; % default 4, leave it empty if you want an automated threshold
 % This means that the peaks that make up the states at least share 6 cells
 % The scut function is a second-order exponential
 % Scut (percentage of cells) Specify the percentage of cells in the total that form an edo
-scut = 0.22; % leave it empty if you want an automated threshold
+scut =[]; %0.22; % leave it empty if you want an automated threshold
 
 % another threshold for coactivity: further removes noise
-hcut = 0.25; %You have to change 70% of the elements to turn it into another state
+hcut = 0.28; %You have to change 70% of the elements to turn it into another state
 
 % SVD parameters
-edos_size_cut = 20; % takes only the first SVD components for faster computation
-edos_svd_cut = 0.75; % SVD factor cut-off
-rep_svd = 20^2-1; % ? an ensemble core cell has to appear this amount of frames to be considered significant
+% edos_size_cut = 20; % takes only the first SVD components for faster computation
+% edos_svd_cut = 0.75; % SVD factor cut-off
+% rep_svd = 20^2-1; % ? an ensemble core cell has to appear this amount of frames to be considered significant
 %Encuentra los repetidos mas de n veces; n sale de plot(svd_fac_mag)LCR dic15
+state_cut = round(size(Spikes,1)/4); % maximum number of states is quarter total number of cells LCR
 
 % Percent cut to determine the cells that weigh more in each state. 
 % 0.25 gives me ~ 15 cells in the largest state
 % csi_cut = 0.15; 
-csi_vec = 0.05:0.05:0.5;
+csi_vec = 0.01:0.01:0.1;
 % here I'm selecting this threshold by cross-validation - this is the range
 % of the parameter that the code will test
 
@@ -83,15 +85,15 @@ H_indexb = 1-Hdist((H_index>hcut)*1); %LC03Feb14
 S_indexp = (H_indexb>hcut)*1; %Second Moment (Hamilton's Similarity). Defines structures better and removes noise
 
 % visualize similarity structures before and after binarization
-figure(1);
+figure(1);clf
 imagesc(S_index_ti); xlabel('frame'); ylabel('frame'); title('similarity matrix')
-figure(2);
+figure(2);clf
 imagesc(S_indexp==0); colormap(gray)
 xlabel('frame'); ylabel('frame'); title('binarized similarity matrix')
 
 %% do SVD, find states and cells
 % Find the peaks in the states and the cells in the states
-[C_edos,sec_Pk_edos] = Edos_from_Sindex_svd(S_indexp,edos_size_cut,edos_svd_cut,rep_svd);
+[C_edos,sec_Pk_edos] = Edos_from_Sindex_svd(S_indexp,state_cut); %,edos_size_cut,edos_svd_cut,rep_svd);
 % the returned C_edos is a binary num_sig_frame-by-num_state matrix, where
 % 1s indicate the timing of corresponding state; sec_Pk_edos is a
 % 1-by-num_sig_frame vector, containing numbers indicating the active state
@@ -123,6 +125,7 @@ end
 
 % plot ensemble states
 sec_Pk_frames = sum(C_edos_temp,2);
+
 HistEdos(Spikes,Pks_Frame,sec_Pk_frames,pks); 
 
 % print detected cycles
@@ -131,7 +134,7 @@ HistEdos(Spikes,Pks_Frame,sec_Pk_frames,pks);
 % find most significant cells for each state
 % csi_num_temp: columns indicate neuron members of each state
 csi_num_temp = zeros(size(Cells_edos));
-figure(5); clf;set(gcf,'color','w')
+figure(6); clf; set(gcf,'color','w')
 N = ceil(sqrt(edos));
 M = ceil(edos/N);
 cc = jet(length(csi_vec));
@@ -148,7 +151,7 @@ for csi=1:edos
         core_vec = zeros(size(Rasterbin,1),1);
         core_vec(tf_idf_csi_hist_norm>csi_vec(n)) = 1;
         sim_core = 1-pdist2(Rasterbin',core_vec','cosine')';
-        [xx,yy,~,auc(n)] = perfcurve(sec_Pk_edos==csi,sim_core,1);
+        [xx,yy,~,auc(n)] = perfcurve(double(sec_Pk_edos==csi),sim_core,1);
         plot(xx,yy,'color',cc(n,:),'linewidth',1);
     end
     plot([0 1],[0 1],'k--')
@@ -164,10 +167,10 @@ end
 csi_ren=max(sum(csi_num_temp>0));
 csi_num=csi_num_temp(1:csi_ren,:); %Celulas mas representativas de cada estado
 [S_index_significant, sis_query]=Search_significant(csi_num,tf_idf_Rasterbin,Rasterbin);
-figure(6); plot(S_index_significant'); xlim([1 length(Pks_Frame)]);
+figure(7); clf; plot(S_index_significant'); xlim([1 length(Pks_Frame)]);
 xlabel('frame'); ylabel('similarity'); title('ensemble similarity with each frame'); legend('show')
 % figure; imagesc(sortrows(sis_query)); 
-figure(7); imagesc(sis_query==0); colormap(gray)
+figure(8); clf; imagesc(sis_query==0); colormap(gray)
 xlabel('ensembles'); ylabel('cell index'); title('ensemble cells')
 
 %% Find the coordinates of the cells that belong to each state and
@@ -178,10 +181,10 @@ xlabel('ensembles'); ylabel('cell index'); title('ensemble cells')
 t_lag = 200;
 states_corr = xcorr_states(Pools_coords,Spikes,t_lag);
 sequences_corr = xcorr_sequences(Pools_coords,Spikes,t_lag);
-figure(8); set(gcf,'color','w')
+figure(9); clf; set(gcf,'color','w')
 subplot(2,1,1);plot(-t_lag:t_lag,states_corr');
 xlabel('time (frame)'); ylabel('cross-correlation');
-title('cell cross-correlation within each ensemble')
+title('cell cross-correlation within each ensemble'); legend('show')
 subplot(2,1,2); plot(-t_lag:t_lag,sequences_corr');
 xlabel('time (frame)'); ylabel('cross-correlation');
 title('cell cross-correlation between different ensembles')
@@ -190,19 +193,20 @@ title('cell cross-correlation between different ensembles')
 cc_lr = [1 0.8 0.8]; % light red
 cc_r = [1 0.2 0.2]; % red
 mksz = 30;
-figure(9); clf; set(gcf,'color','w')
+figure(10); clf; set(gcf,'color','w')
 for n = 1:edos
     subplot(M,N,n); hold on
-    scatter(Coord_active(:,1),Coord_active(:,2),mksz,'k');
-    scatter(Cells_coords(:,1,n),Cells_coords(:,2,n),mksz,cc_lr,'filled');
-    scatter(Pools_coords(:,1,n),Pools_coords(:,2,n),mksz,cc_r,'filled');
+    scatter(Coord_active(:,1),-Coord_active(:,2),mksz,'k');
+    scatter(Cells_coords(:,1,n),-Cells_coords(:,2,n),mksz,cc_lr,'filled');
+    scatter(Pools_coords(:,1,n),-Pools_coords(:,2,n),mksz,cc_r,'filled');
     title(['ensemble #' num2str(n)]);
     axis off equal
 end
 
 %% plot calcium transients of core cells
-if ~isempty(FFo)
-    figure(10); clf; set(gcf,'color','w')
+FFo=FFo';%FFo [frames, cells] LCR
+if ~isempty(FFo) 
+    figure(11); clf; set(gcf,'color','w')
     Fmi = min(FFo(:));
     Fma = max(FFo(:));
     for n = 1:edos
