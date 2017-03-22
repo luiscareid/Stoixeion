@@ -85,9 +85,9 @@ H_indexb = 1-Hdist((H_index>hcut)*1); %LC03Feb14
 S_indexp = (H_indexb>hcut)*1; %Second Moment (Hamilton's Similarity). Defines structures better and removes noise
 
 % visualize similarity structures before and after binarization
-figure(1);clf
+figure(1);clf; set(gcf,'color','w')
 imagesc(S_index_ti); xlabel('frame'); ylabel('frame'); title('similarity matrix')
-figure(2);clf
+figure(2);clf; set(gcf,'color','w')
 imagesc(S_indexp==0); colormap(gray)
 xlabel('frame'); ylabel('frame'); title('binarized similarity matrix')
 
@@ -204,7 +204,7 @@ for n = 1:edos
 end
 
 %% plot calcium transients of core cells
-FFo=FFo';%FFo [frames, cells] LCR
+% FFo=FFo';%FFo [frames, cells] LCR
 if ~isempty(FFo) 
     figure(11); clf; set(gcf,'color','w')
     Fmi = min(FFo(:));
@@ -225,6 +225,7 @@ if ~isempty(FFo)
         xlim([1 size(Spikes,2)]); ylim([0 ii+1])
         xlabel('time (frame)'); ylabel('F'); box on
         title(['core #' num2str(n)]);
+        set(gca,'ytick',1:length(core));
     end
 end
 
