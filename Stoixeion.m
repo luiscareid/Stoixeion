@@ -225,6 +225,7 @@ if ~isempty(FFo)
         xlim([1 size(Spikes,2)]); ylim([0 ii+1])
         xlabel('time (frame)'); ylabel('F'); box on
         title(['core #' num2str(n)]);
+        set(gca,'ytick',1:length(core));
     end
 end
 
