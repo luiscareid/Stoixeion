@@ -92,7 +92,6 @@ end
 % fac_count = fac_count/fac_count(end);
 % num_state = find(fac_count>p,1)-1;
 
-
 % %remove values smaller than cut in rows and columns
 % S_svd_sig = S_svd(1:edos_size_cut,1:edos_size_cut);
 % V_svd_tsig = V_svd(:,1:edos_size_cut)';

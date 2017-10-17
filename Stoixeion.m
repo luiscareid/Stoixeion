@@ -46,7 +46,7 @@ hcut = 0.28; %You have to change 70% of the elements to turn it into another sta
 % edos_svd_cut = 0.75; % SVD factor cut-off
 % rep_svd = 20^2-1; % ? an ensemble core cell has to appear this amount of frames to be considered significant
 %Encuentra los repetidos mas de n veces; n sale de plot(svd_fac_mag)LCR dic15
-state_cut = round(size(Spikes,1)/6); % maximum number of states is a fraction of total number of cells LCR
+state_cut = round(size(Spikes,1)/4); % maximum number of states is quarter total number of cells LCR
 
 % Percent cut to determine the cells that weigh more in each state. 
 % 0.25 gives me ~ 15 cells in the largest state
@@ -85,9 +85,9 @@ H_indexb = 1-Hdist((H_index>hcut)*1); %LC03Feb14
 S_indexp = (H_indexb>hcut)*1; %Second Moment (Hamilton's Similarity). Defines structures better and removes noise
 
 % visualize similarity structures before and after binarization
-figure(1);clf
+figure(1);clf; set(gcf,'color','w')
 imagesc(S_index_ti); xlabel('frame'); ylabel('frame'); title('similarity matrix')
-figure(2);clf
+figure(2);clf; set(gcf,'color','w')
 imagesc(S_indexp==0); colormap(gray)
 xlabel('frame'); ylabel('frame'); title('binarized similarity matrix')
 
@@ -204,7 +204,7 @@ for n = 1:edos
 end
 
 %% plot calcium transients of core cells
-FFo=FFo';%FFo [frames, cells] LCR
+% FFo=FFo';%FFo [frames, cells] LCR
 if ~isempty(FFo) 
     figure(11); clf; set(gcf,'color','w')
     Fmi = min(FFo(:));
@@ -221,13 +221,11 @@ if ~isempty(FFo)
             f = (f-Fmi)/(Fma-Fmi);
             plot(1:size(Spikes,2),ii+f,'color',cc(ii-floor(ii/65)*64,:),...
                 'linewidth',1);
-            text(size(Spikes,2)+size(Spikes,2)*0.02,ii,num2str(core(ii)));
         end
         xlim([1 size(Spikes,2)]); ylim([0 ii+1])
-        xlabel('time (frame)'); ylabel('cell #'); 
-        box on
+        xlabel('time (frame)'); ylabel('F'); box on
         title(['core #' num2str(n)]);
-        set(gca,'ytick',[]);
+        set(gca,'ytick',1:length(core));
     end
 end
 
